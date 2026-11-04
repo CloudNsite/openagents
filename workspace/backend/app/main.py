@@ -23,6 +23,7 @@ from app.config import config
 # load before any request can write permission rows.
 import app.services.permission_cache  # noqa: E402,F401
 from app.routers import web_projects, reactions, agent_services, account, agent_profile, app_version, approvals, auth, briefs, browser, campaign, pilot, cloud_agents, devices, hosted_agents, events, feedback, fetch, files, grants, groups, integrations, invites, issues, knowledge, model_access, network, nodes, notifications, onboarding, read_state, registry, routines, search, shares, sharing, tasks, thread_access, timers, todos, watches, workflows, workspaces
+from app.routers import google_login
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -689,6 +690,7 @@ app.include_router(workflows.router)
 app.include_router(timers.router)
 app.include_router(watches.router)
 app.include_router(workspaces.router)
+app.include_router(google_login.router)
 
 
 @app.get("/health")

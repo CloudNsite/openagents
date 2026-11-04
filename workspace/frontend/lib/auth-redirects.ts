@@ -14,7 +14,18 @@ const CENTRAL = 'https://openagents.org';
 // localhost: sign in with the app's own Firebase popup instead of bouncing
 // through openagents.org. Invitation acceptance explicitly uses central login
 // so every account provider is available and its return URL is preserved.
-const INLINE_LOGIN = process.env.NEXT_PUBLIC_INLINE_LOGIN === '1';
+const INLINE_LOGIN = process.env.NEXT_PUBLIC_INLINE_LOGIN === '1' || process.env.NEXT_PUBLIC_GOOGLE_LOGIN === '1';
+
+// NEXT_PUBLIC_GOOGLE_LOGIN=1 (self-hosted): sign in with Google directly through
+// this deployment's backend (/v1/auth/google/start); no Firebase, no openagents.org.
+export const GOOGLE_LOGIN = process.env.NEXT_PUBLIC_GOOGLE_LOGIN === '1';
+
+export function startGoogleLogin(returnTo?: string): void {
+  if (typeof window === 'undefined') return;
+  const r = returnTo ?? (window.location.pathname + window.location.search + window.location.hash);
+  const api = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/+$/, '');
+  window.location.href = `${api}/v1/auth/google/start?returnTo=${encodeURIComponent(r)}`;
+}
 
 function isLocalhost(): boolean {
   if (INLINE_LOGIN) return true;
@@ -30,6 +41,7 @@ export function goToCentralLogin(fallbackSignIn?: () => void, options?: { forceC
   if (typeof window === 'undefined') return;
   const host = desktopHost();
   if (host) { host.signIn(); return; }
+  if (GOOGLE_LOGIN) { startGoogleLogin(); return; }
   if (isLocalhost() && !options?.forceCentral) {
     fallbackSignIn?.();
     return;

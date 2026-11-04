@@ -10,7 +10,7 @@ function Login() {
   const { user, idToken, loading, signIn } = useOpenAgentsAuth();
   const params = useSearchParams();
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(params.get('error') || '');
   const target = params.get('returnTo') || '/';
   // Only same-origin application paths may be used as the return destination.
   const returnTo = target.startsWith('/') && !target.startsWith('//') && !target.includes('\\') && !target.startsWith('/login') ? target : '/';

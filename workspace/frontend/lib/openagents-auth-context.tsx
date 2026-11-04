@@ -75,7 +75,7 @@ export function OpenAgentsAuthProvider({ children }: { children: React.ReactNode
       return;
     }
 
-    if (desktopHost()) { setLoading(false); return; }
+    if (desktopHost() || process.env.NEXT_PUBLIC_GOOGLE_LOGIN === '1') { setLoading(false); return; }
 
     // Dynamically import firebase to avoid loading it on non-openagents domains
     let unsubscribe: (() => void) | undefined;
@@ -164,6 +164,11 @@ export function OpenAgentsAuthProvider({ children }: { children: React.ReactNode
   const signIn = useCallback(async () => {
     const host = desktopHost();
     if (host) { host.signIn(); return; }
+    if (process.env.NEXT_PUBLIC_GOOGLE_LOGIN === '1') {
+      const { startGoogleLogin } = await import('./auth-redirects');
+      startGoogleLogin();
+      return;
+    }
     const { signInWithGoogle, getIdToken, getFreshIdToken, getResolvedEmail } = await import('./firebase');
     const firebaseUser = await signInWithGoogle();
     const token = await getIdToken();
@@ -195,6 +200,7 @@ export function OpenAgentsAuthProvider({ children }: { children: React.ReactNode
     setIdToken(null);
     const host = desktopHost();
     if (host) { host.signOut(); return; }
+    if (process.env.NEXT_PUBLIC_GOOGLE_LOGIN === '1') return;
     const { signOutUser } = await import('./firebase');
     await signOutUser();
   }, []);
