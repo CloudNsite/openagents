@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { goToCentralLogin, goToCentralLogout, redirectToLogin } from './auth-redirects';
+import { goToCentralLogin, goToCentralLogout, googleLoginDest, redirectToLogin } from './auth-redirects';
 
 afterEach(() => vi.unstubAllGlobals());
 describe('desktop account boundaries', () => {
@@ -54,4 +54,31 @@ it('can bypass inline login even on localhost', () => {
   goToCentralLogin(popup, { forceCentral: true });
   expect(popup).not.toHaveBeenCalled();
   expect(location.href).toContain('https://openagents.org/login?returnTo=');
+});
+
+describe('googleLoginDest', () => {
+  const origin = 'https://agents.example.com';
+  it('continues to pages on this origin', () => {
+    expect(googleLoginDest('/team/threads?x=1#m', origin)).toBe('/team/threads?x=1#m');
+  });
+  it('allows the desktop landing page, with its handoff query', () => {
+    const r = '/auth/desktop?port=54321&state=abc&retried=1';
+    expect(googleLoginDest(r, origin)).toBe(r);
+  });
+  it.each(['/auth/google', '/auth/callback?x=1', '/auth/desktop/../callback', '/auth/desktopx'])(
+    'refuses the other auth page %s', (r) => {
+      expect(googleLoginDest(r, origin)).toBe('/');
+    });
+  it.each([
+    'https://evil.example/',
+    'https://evil.example/auth/desktop?port=54321&state=abc',
+    '//evil.example/',
+    '/\\evil.example/',
+    '/\t/evil.example/',
+    '/\n/evil.example/auth/desktop',
+    'javascript:alert(1)',
+    'https://user@evil.example/',
+  ])('refuses the off-origin target %j', (r) => {
+    expect(googleLoginDest(r, origin)).toBe('/');
+  });
 });

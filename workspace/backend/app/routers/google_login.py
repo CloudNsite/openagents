@@ -44,7 +44,8 @@ def enabled() -> bool:
 
 
 def _safe_return(path: str) -> str:
-    if path and path.startswith("/") and not path.startswith("//") and "\\" not in path:
+    # isprintable: browsers strip tabs and newlines, so "/\t/evil.com" means "//evil.com".
+    if path and path.startswith("/") and not path.startswith("//") and "\\" not in path and path.isprintable():
         return path
     return "/"
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { googleLoginDest } from '@/lib/auth-redirects';
 import { saveWorkspaceSession } from '@/lib/workspace-session';
 
 /** Landing page for direct Google sign-in (see backend routers/google_login.py).
@@ -14,9 +15,7 @@ export default function GoogleAuthLanding() {
     history.replaceState(null, '', '/auth/google');
     if (!s || !e || !x) { setError('Sign-in failed. Please try again.'); return; }
     saveWorkspaceSession({ token: s, email: e, displayName: p.get('n') || null, expiresAt: x });
-    const r = p.get('r') || '/';
-    const dest = r.startsWith('/') && !r.startsWith('//') && !r.startsWith('/auth/') ? r : '/';
-    window.location.replace(dest);
+    window.location.replace(googleLoginDest(p.get('r') || '/'));
   }, []);
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-8">

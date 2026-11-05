@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
+import { GOOGLE_LOGIN, startGoogleLogin } from '@/lib/auth-redirects';
 import {
   DESKTOP_AUTH_PATH,
   forwardToDesktop,
@@ -19,7 +20,8 @@ import { loadWorkspaceSession } from '@/lib/workspace-session';
  *
  *  - a workspace session already exists on this origin → hand it to the port
  *  - none does → send the user through the central login, with this page as
- *    the returnTo, and take the first branch when they come back
+ *    the returnTo, and take the first branch when they come back. A self-hosted
+ *    deployment with GOOGLE_LOGIN goes through its own backend instead.
  *
  * Deliberately an ordinary page rather than a branch of /auth/callback: the
  * central login mints its one-time token and bounces through the callback ON
@@ -60,7 +62,12 @@ function DesktopAuth() {
         setError({ key: 'auth.desktopNoSession' });
         return;
       }
-      window.location.replace(`${CENTRAL}/login?returnTo=${encodeURIComponent(returnUrl(handoff))}`);
+      const back = returnUrl(handoff);
+      if (GOOGLE_LOGIN) {
+        startGoogleLogin(back.pathname + back.search);
+        return;
+      }
+      window.location.replace(`${CENTRAL}/login?returnTo=${encodeURIComponent(back.href)}`);
       return;
     }
 
@@ -118,12 +125,12 @@ function DesktopAuth() {
 }
 
 /** This page's own URL, marked so a fruitless round trip cannot loop. */
-function returnUrl(handoff: DesktopHandoff): string {
+function returnUrl(handoff: DesktopHandoff): URL {
   const url = new URL(DESKTOP_AUTH_PATH, window.location.origin);
   url.searchParams.set('port', String(handoff.port));
   url.searchParams.set('state', handoff.state);
   url.searchParams.set(RETRY_FLAG, '1');
-  return url.href;
+  return url;
 }
 
 export default function DesktopAuthPage() {

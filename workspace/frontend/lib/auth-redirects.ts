@@ -1,3 +1,4 @@
+import { DESKTOP_AUTH_PATH } from './desktop-handoff';
 import { desktopHost } from './desktop-host';
 
 // Central auth redirects for the workspace app.
@@ -25,6 +26,20 @@ export function startGoogleLogin(returnTo?: string): void {
   const r = returnTo ?? (window.location.pathname + window.location.search + window.location.hash);
   const api = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/+$/, '');
   window.location.href = `${api}/v1/auth/google/start?returnTo=${encodeURIComponent(r)}`;
+}
+
+/** Where /auth/google may continue to. Parsed rather than prefix-matched, so the
+ * browser's own view of the URL decides what is off-origin. The only /auth/ page
+ * allowed is the desktop landing, which hands the new session to the launcher. */
+export function googleLoginDest(returnTo: string, origin = window.location.origin): string {
+  try {
+    const url = new URL(returnTo, origin);
+    if (url.origin !== origin) return '/';
+    if (url.pathname.startsWith('/auth/') && url.pathname !== DESKTOP_AUTH_PATH) return '/';
+    return url.pathname + url.search + url.hash;
+  } catch {
+    return '/';
+  }
 }
 
 function isLocalhost(): boolean {
